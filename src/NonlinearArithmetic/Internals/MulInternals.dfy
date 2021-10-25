@@ -37,15 +37,18 @@ module MulInternals {
   /* performs induction on multiplication */ 
   lemma LemmaMulInduction(f: int -> bool)
     requires f(0)
+    /* Dafny selected triggers: {i + 1}, {i >= 0} */
     requires forall i {:trigger f(i), f(i + 1)} :: i >= 0 && f(i) ==> f(i + 1)
+    /* Dafny selected triggers: {i - 1}, {i <= 0} */
     requires forall i {:trigger f(i), f(i - 1)} :: i <= 0 && f(i) ==> f(i - 1)
-    ensures  forall i {:trigger f(i)} :: f(i)
+    ensures  forall i :: f(i)
   {
     forall i ensures f(i) { LemmaInductionHelper(1, f, i); }
   }
 
   /* proves that multiplication is always commutative */
   lemma LemmaMulCommutes()
+    /* Dafny selected triggers: {x *y}, {y * x} */
     ensures  forall x:int, y:int {:trigger x * y} :: x * y == y * x
   {
     forall x:int, y:int
@@ -60,7 +63,9 @@ module MulInternals {
   //rename for both directions ???
   lemma LemmaMulSuccessor()
     ensures forall x:int, y:int {:trigger (x + 1) * y} :: (x + 1) * y == x * y + y
+    /* Dafny selected triggers: {x * y + y}, {(x + 1) * y} */
     ensures forall x:int, y:int {:trigger (x - 1) * y} :: (x - 1) * y == x * y - y
+    /* Dafny selected triggers: {x * y - y}, {(x - 1) * y} */
   {
     LemmaMulCommutes();
     forall x:int, y:int
@@ -74,7 +79,9 @@ module MulInternals {
 
   /* proves the distributive property of multiplication */
   lemma LemmaMulDistributes()
+    /* Dafny selected triggers: {x * z + y * z}, {(x + y) * z} */
     ensures forall x:int, y:int, z:int {:trigger (x + y) * z} :: (x + y) * z == x * z + y * z
+    /* Dafny selected triggers: {x * z - y * z}, {(x - y) * z} */
     ensures forall x:int, y:int, z:int {:trigger (x - y) * z} :: (x - y) * z == x * z - y * z
   {
     LemmaMulSuccessor();
@@ -84,6 +91,9 @@ module MulInternals {
     {
       var f1 := i => (x + i) * z == x * z + i * z;
       var f2 := i => (x - i) * z == x * z - i * z;
+      /* Dafny selects {x + i + 1}, {x + i + 1} for (x + i + 1) * z == (x + i + 1) * z
+         and {x + 1} for (x + i + 1) * z == (x + i) * z + z.
+         Dafny selects similar triggers for the next 4 lines. Removing these manual triggers results in verification time-outs. */
       assert forall i {:trigger (x + (i + 1)) * z} :: (x + (i + 1)) * z == ((x + i) + 1) * z == (x + i) * z + z;
       assert forall i {:trigger (x + (i - 1)) * z} :: (x + (i - 1)) * z == ((x + i) - 1) * z == (x + i) * z - z;
       assert forall i {:trigger (x - (i + 1)) * z} :: (x - (i + 1)) * z == ((x - i) - 1) * z == (x - i) * z - z;
@@ -98,8 +108,11 @@ module MulInternals {
   /* groups distributive and associative properties of multiplication */
   predicate MulAuto()
   {
+    /* Dafny selected triggers: {y * x}, {x * y} */
     && (forall x:int, y:int {:trigger x * y} :: x * y == y * x)
+    /* Dafny selected triggers: {x * z + y * z}, {(x + y) * z} */
     && (forall x:int, y:int, z:int {:trigger (x + y) * z} :: (x + y) * z == x * z + y * z)
+    /* Dafny selected triggers: {x * z - y * z}, {(x - y) * z} */
     && (forall x:int, y:int, z:int {:trigger (x - y) * z} :: (x - y) * z == x * z - y * z)
   }
 
@@ -114,14 +127,16 @@ module MulInternals {
   /* performs auto induction for multiplication */
   lemma LemmaMulInductionAuto(x: int, f: int -> bool)
     requires MulAuto() ==> f(0)
-                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + 1))
-                          && (forall i {:trigger IsLe(i, 0)} :: IsLe(i, 0) && f(i) ==> f(i - 1))
+                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + 1)) /* Dafny selected triggers: {i + 1}, {IsLe(0, i)} */
+                          && (forall i {:trigger IsLe(i, 0)} :: IsLe(i, 0) && f(i) ==> f(i - 1)) /* Dafny selected triggers: {i - 1}, {IsLe(i, 0)} */
     ensures  MulAuto()
     ensures  f(x)
   {
     LemmaMulCommutes();
     LemmaMulDistributes();
+    /* Dafny selected triggers: {i + 1}, {IsLe(0, i)} */
     assert forall i {:trigger f(i)} :: IsLe(0, i) && f(i) ==> f(i + 1);
+    /* Dafny selected triggers: {i - 1}, {IsLe(i, 0)} */
     assert forall i {:trigger f(i)} :: IsLe(i, 0) && f(i) ==> f(i - 1);
     LemmaMulInduction(f);
     assert f(x);
@@ -130,14 +145,16 @@ module MulInternals {
   /* performs auto induction on multiplication for all i s.t. f(i) exists */
   lemma LemmaMulInductionAutoForall(f: int -> bool)
     requires MulAuto() ==> f(0)
-                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + 1))
-                          && (forall i {:trigger IsLe(i, 0)} :: IsLe(i, 0) && f(i) ==> f(i - 1))
+                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + 1)) /* Dafny selected triggers: {i + 1}, {IsLe(0, i)} */
+                          && (forall i {:trigger IsLe(i, 0)} :: IsLe(i, 0) && f(i) ==> f(i - 1)) /* Dafny selected triggers: {i - 1}, {IsLe(i, 0)} */
     ensures  MulAuto()
-    ensures  forall i {:trigger f(i)} :: f(i)
+    ensures  forall i :: f(i)
   {
     LemmaMulCommutes();
     LemmaMulDistributes();
+    /* Dafny selected triggers: {i + 1}, {IsLe(0, i)} */
     assert forall i {:trigger f(i)} :: IsLe(0, i) && f(i) ==> f(i + 1);
+    /* Dafny selected triggers: {i - 1}, {IsLe(i, 0)} */
     assert forall i {:trigger f(i)} :: IsLe(i, 0) && f(i) ==> f(i - 1);
     LemmaMulInduction(f);
   }

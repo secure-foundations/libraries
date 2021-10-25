@@ -21,7 +21,9 @@ module GeneralInternals {
   lemma LemmaInductionHelper(n: int, f: int -> bool, x: int)
     requires n > 0
     requires forall i :: 0 <= i < n ==> f(i)
+    /* Dafny selected triggers: {i + n}, {i >= 0} */
     requires forall i {:trigger f(i), f(i + n)} :: i >= 0 && f(i) ==> f(i + n)
+    /* Dafny selected triggers: {i - n}, {i < n} */
     requires forall i {:trigger f(i), f(i - n)} :: i < n  && f(i) ==> f(i - n)
     ensures  f(x)
     decreases if x >= n then x else -x

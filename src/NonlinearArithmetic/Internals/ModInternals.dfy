@@ -51,7 +51,9 @@ module ModInternals {
   lemma LemmaModInductionForall(n: int, f: int -> bool)
     requires n > 0
     requires forall i :: 0 <= i < n ==> f(i)
+    /* {i + n}, {i >= 0} */
     requires forall i {:trigger f(i), f(i + n)} :: i >= 0 && f(i) ==> f(i + n)
+    /* {i - n}, {i < n} */
     requires forall i {:trigger f(i), f(i - n)} :: i < n  && f(i) ==> f(i - n)
     ensures  forall i :: f(i)
   {
@@ -63,6 +65,7 @@ module ModInternals {
   lemma LemmaModInductionForall2(n: int, f:(int, int)->bool)
     requires n > 0
     requires forall i, j :: 0 <= i < n && 0 <= j < n ==> f(i, j)
+    /* Dafny rejects trigger f(i, j) in the next 4 lines. */
     requires forall i, j {:trigger f(i, j), f(i + n, j)} :: i >= 0 && f(i, j) ==> f(i + n, j)
     requires forall i, j {:trigger f(i, j), f(i, j + n)} :: j >= 0 && f(i, j) ==> f(i, j + n)
     requires forall i, j {:trigger f(i, j), f(i - n, j)} :: i < n  && f(i, j) ==> f(i - n, j)
@@ -88,10 +91,12 @@ module ModInternals {
   /* proves the basics of the modulus operation */
   lemma LemmaModBasics(n: int)
     requires n > 0
-    ensures  forall x: int {:trigger (x + n) % n} :: (x + n) % n == x % n
-    ensures  forall x: int {:trigger (x - n) % n} :: (x - n) % n == x % n
-    ensures  forall x: int {:trigger (x + n) / n} :: (x + n) / n == x / n + 1
-    ensures  forall x: int {:trigger (x - n) / n} :: (x - n) / n == x / n - 1
+    ensures  forall x: int {:trigger (x + n) % n} :: (x + n) % n == x % n /* {x + n} */
+    ensures  forall x: int {:trigger (x - n) % n} :: (x - n) % n == x % n /* {x - n} */
+    ensures  forall x: int {:trigger (x + n) / n} :: (x + n) / n == x / n + 1 /* {x / n + 1}, {x + n} */
+    ensures  forall x: int {:trigger (x - n) / n} :: (x - n) / n == x / n - 1 /* {x / n - 1}, {x - n} */
+    /* Dafny selected triggers: {x % n}, {x < n}, {0 <= x}
+       Removing manual trigger causes a time-out. */
     ensures  forall x: int {:trigger x % n} :: 0 <= x < n <==> x % n == x
   {
     forall x: int
@@ -157,12 +162,15 @@ module ModInternals {
       requires n > 0;
   {
   && (n % n == (-n) % n == 0)
-  && (forall x: int {:trigger (x % n) % n} :: (x % n) % n == x % n)
+  && (forall x: int :: (x % n) % n == x % n)
+  /* Dafny selected triggers: {x % n}, {x < n}, {0 <= x} */
   && (forall x: int {:trigger x % n} :: 0 <= x < n <==> x % n == x)
+  /* Dafny selected triggers: {(x + y) % n}, {x % n + y % n} */ 
   && (forall x: int, y: int {:trigger (x + y) % n} ::
                   (var z := (x % n) + (y % n);
                       (  (0 <= z < n     && (x + y) % n == z)
                       || (n <= z < n + n && (x + y) % n == z - n))))
+  /* Dafny selected triggers: {(x - y) % n}, {x % n - y % n} */ 
   && (forall x: int, y: int {:trigger (x - y) % n} ::
                   (var z := (x % n) - (y % n);
                       (   (0 <= z < n && (x - y) % n == z)
@@ -179,6 +187,7 @@ module ModInternals {
     LemmaMulIsDistributiveAddAuto();
     LemmaMulIsDistributiveSubAuto();
 
+    /* Dafny selected triggers: {(x + y) % n}, {x % n + y % n} */
     forall x: int, y: int {:trigger (x + y) % n}
       ensures var z := (x % n) + (y % n);
               || (0 <= z < n && (x + y) % n == z)
@@ -198,6 +207,7 @@ module ModInternals {
       }
     }
 
+    /* Dafny selected triggers: {(x - y) % n}, {x % n - y % n */
     forall x: int, y: int {:trigger (x - y) % n}
       ensures var z := (x % n) - (y % n);
               || (0 <= z < n && (x - y) % n == z)
@@ -221,15 +231,20 @@ module ModInternals {
   /* performs auto induction for modulus */
   lemma LemmaModInductionAuto(n: int, x: int, f: int -> bool)
     requires n > 0
+    /* Dafny selected triggers: {f(i)}, {IsLe(0, i)} */
     requires ModAuto(n) ==> && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && i < n ==> f(i))
-                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
-                          && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */
+                           && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
+    /* Dafny selected triggers: {i - n}, {i + 1} */
+                           && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
     ensures  ModAuto(n)
     ensures  f(x)
   {
     LemmaModAuto(n);
     assert forall i :: IsLe(0, i) && i < n ==> f(i);
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */
     assert forall i {:trigger f(i), f(i + n)} :: IsLe(0, i) && f(i) ==> f(i + n);
+    /* Dafny selected triggers: {i - n}, {i + 1} */
     assert forall i {:trigger f(i), f(i - n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n);
     LemmaModInductionForall(n, f);
     assert f(x);
@@ -239,15 +254,20 @@ module ModInternals {
   /* performs auto induction on modulus for all i s.t. f(i) exists */
   lemma LemmaModInductionAutoForall(n: int, f: int -> bool)
     requires n > 0
+    /* Dafny selected triggers: {f(i)}, {IsLe(0, i)} */ 
     requires ModAuto(n) ==> && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && i < n ==> f(i))
-                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
-                          && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */ 
+                           && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
+    /* Dafny selected triggers: {i - n}, {i + 1} */ 
+                           && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
     ensures  ModAuto(n)
-    ensures  forall i {:trigger f(i)} :: f(i)
+    ensures  forall i :: f(i)
   {
     LemmaModAuto(n);
     assert forall i :: IsLe(0, i) && i < n ==> f(i);
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */ 
     assert forall i {:trigger f(i), f(i + n)} :: IsLe(0, i) && f(i) ==> f(i + n);
+    /* Dafny selected triggers: {i - n}, {i + 1} */ 
     assert forall i {:trigger f(i), f(i - n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n);
     LemmaModInductionForall(n, f);
   }

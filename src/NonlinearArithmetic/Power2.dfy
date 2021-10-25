@@ -43,11 +43,13 @@ module Power2 {
   }
 
   lemma LemmaPow2Auto()
+    /* Dafny selected triggers: {Pow(2, e)}, {Pow2(e)} */
     ensures forall e: nat {:trigger Pow2(e)} :: Pow2(e) == Pow(2, e)
   {
     reveal Pow();
     reveal Pow2();
     
+    /* Dafny selected triggers: {Pow(2, e)}, {Pow2(e)} */
     forall e: nat {:trigger Pow2(e)}
       ensures Pow2(e) == Pow(2, e)
     {
@@ -69,10 +71,12 @@ module Power2 {
   }
 
   lemma LemmaPow2MaskDiv2Auto()
+    /* Dafny selected triggers: Pow2(e - 1)}, {(Pow2(e) - 1) / 2}, {0 < e} */
     ensures forall e: nat {:trigger Pow2(e)} :: 0 < e ==>
       (Pow2(e) - 1) / 2 == Pow2(e - 1) - 1
   {
     reveal Pow2();
+    /* Dafny selected triggers: {Pow2(e - 1)}, {(Pow2(e) - 1) / 2}, {0 < e} */
     forall e: nat {:trigger Pow2(e)} | 0 < e
       ensures (Pow2(e) - 1) / 2 == Pow2(e - 1) - 1
     {

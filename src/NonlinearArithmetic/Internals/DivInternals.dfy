@@ -58,8 +58,12 @@ module DivInternals {
   lemma LemmaDivBasics(n: int)
     requires n > 0
     ensures  n / n == -((-n) / n) == 1
+    /* Removing the triggers below results in a time-out. */
+    /* Dafny selected triggers: {x / n}, {x < n}, {0 <= x} */
     ensures  forall x:int {:trigger x / n} :: 0 <= x < n <==> x / n == 0
+    /* Dafny selected triggers: {x / n + 1}, {x + n} */
     ensures  forall x:int {:trigger (x + n) / n} :: (x + n) / n == x / n + 1
+    /* Dafny selected triggers: {x / n - 1}, {x - n} */
     ensures  forall x:int {:trigger (x - n) / n} :: (x - n) / n == x / n - 1
   {
     LemmaModAuto(n);
@@ -81,11 +85,14 @@ module DivInternals {
   {
     && ModAuto(n)
     && (n / n == -((-n) / n) == 1)
+    /* Dafny selected triggers: {x / n}, {x < n}, {0 <= x} */
     && (forall x: int {:trigger x / n} :: 0 <= x < n <==> x / n == 0)
+    /* Dafny selected triggers: {x / n + y / n}, {(x + y) / n}, {y % n, x % n} */
     && (forall x: int, y: int {:trigger (x + y) / n} ::
           (var z := (x % n) + (y % n);
                     ((0 <= z < n && (x + y) / n == x / n + y / n) ||
                     (n <= z < n + n && (x + y) / n == x / n + y / n + 1))))
+    /* Dafny selected triggers: {x / n - y / n}, {(x - y) / n}, {y % n, x % n} */
     && (forall x: int, y: int {:trigger (x - y) / n} ::
           (var z := (x % n) - (y % n);
                     ((0 <= z < n && (x - y) / n == x / n - y / n) ||
@@ -101,6 +108,7 @@ module DivInternals {
     LemmaDivBasics(n);
     assert (0 + n) / n == 1;
     assert (0 - n) / n == -1;
+    /* Dafny selected triggers: {x / n + y / n}, {(x + y) / n}, {y % n, x % n} */
     forall x:int, y:int {:trigger (x + y) / n}
       ensures  var z := (x % n) + (y % n);
                       (|| (0 <= z < n && (x + y) / n == x / n + y / n)
@@ -132,6 +140,7 @@ module DivInternals {
       LemmaModInductionForall2(n, f);
       assert f(x, y);
     }
+    /* Dafny selected triggers: {x / n - y / n}, {(x - y) / n}, {y % n, x % n} */
     forall x:int, y:int {:trigger (x - y) / n}
       ensures  var z := (x % n) - (y % n);
                       (|| (0 <= z < n && (x - y) / n == x / n - y / n)
@@ -168,9 +177,12 @@ module DivInternals {
   /* Performs auto induction for division */
   lemma LemmaDivInductionAuto(n: int, x: int, f: int->bool)
     requires n > 0
+    /* Dafny selected triggers: {f(i)}, {IsLe(0, i)} */
     requires DivAuto(n) ==> && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && i < n ==> f(i))
-                          && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
-                          && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */
+                           && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
+    /* Dafny selected triggers: {i - n}, {i + 1} */
+                           && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
     ensures  DivAuto(n)
     ensures  f(x)
   {
@@ -185,15 +197,20 @@ module DivInternals {
   /* Performs auto induction on division for all i s.t. f(i) exists */
   lemma LemmaDivInductionAutoForall(n:int, f:int->bool)
     requires n > 0
+    /* Dafny selected triggers: {f(i)}, {IsLe(0, i)} */ 
     requires DivAuto(n) ==> && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && i < n ==> f(i))
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */ 
                           && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + n))
+    /* Dafny selected triggers: {i - n}, {i + 1} */ 
                           && (forall i {:trigger IsLe(i + 1, n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n))
     ensures  DivAuto(n)
     ensures  forall i {:trigger f(i)} :: f(i)
   {
     LemmaDivAuto(n);
     assert forall i :: IsLe(0, i) && i < n ==> f(i);
+    /* Dafny selected triggers: {i + n}, {IsLe(0, i)} */ 
     assert forall i {:trigger f(i), f(i + n)} :: IsLe(0, i) && f(i) ==> f(i + n);
+    /* Dafny selected triggers: {i - n}, {i + 1} */ 
     assert forall i {:trigger f(i), f(i - n)} :: IsLe(i + 1, n) && f(i) ==> f(i - n);
     LemmaModInductionForall(n, f);
   }

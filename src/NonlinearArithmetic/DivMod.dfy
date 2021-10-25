@@ -41,6 +41,7 @@ module DivMod {
   }
 
   lemma LemmaDivIsDivRecursiveAuto()
+    /* Dafny selected triggers: {DivRecursive(x, d)} */
     ensures forall x: int, d: int {:trigger x / d} :: d > 0 ==> DivRecursive(x, d) == x / d
   {
     reveal DivRecursive();
@@ -81,9 +82,10 @@ module DivMod {
   }
     
   lemma LemmaDivBasicsAuto()
-    ensures forall x {:trigger 0 / x} :: x != 0 ==> 0 / x == 0
-    ensures forall x {:trigger x / 1} :: x / 1 == x
-    ensures forall x, y {:trigger x / y} :: x >= 0 && y > 0 ==> x / y >= 0
+    ensures forall x :: x != 0 ==> 0 / x == 0
+    ensures forall x :: x / 1 == x
+    ensures forall x, y :: x >= 0 && y > 0 ==> x / y >= 0
+    /* Dafny selected triggers: {x / y}, {y > 0, x >= 0} */
     ensures forall x, y {:trigger x / y} :: x >= 0 && y > 0 ==> x / y <= x
   {
     forall x: int
@@ -103,6 +105,7 @@ module DivMod {
   /* if a dividend is a whole number and the divisor is a natural number and their
   quotient is 0, this implies that the dividend is smaller than the divisor */
   lemma LemmaSmallDivConverseAuto()
+    /* Dafny selected triggers: {x < d}, {x / d}, {0 < d, 0 <= x} */
     ensures forall x, d {:trigger x / d } :: 0 <= x && 0 < d && x / d == 0 ==> x < d
   {
     forall x, d | 0 <= x && 0 < d && x / d == 0
@@ -123,7 +126,8 @@ module DivMod {
   {
     reveal DivRecursive();
     LemmaDivIsDivRecursiveAuto();
-    assert forall u: int, d: int {:trigger u / d} {:trigger DivRecursive(u, d)} 
+    /* Dafny selected triggers: DivRecursive(u, d) */
+    assert forall u: int, d: int {:trigger u / d} {:trigger DivRecursive(u, d)}
       :: d > 0 ==> DivRecursive(u, d) == u / d;
 
     if (x < z)
@@ -138,6 +142,7 @@ module DivMod {
   }
 
   lemma LemmaDivIsOrderedByDenominatorAuto()
+    /* Dafny selected triggers: {x / z, x / y}, {x / z, 1 <= y}, {x / y, y <= z}, {y <= z, 0 <= x} */
     ensures forall x: int, y: int, z: int {:trigger x / y, x / z} :: 0 <= x && 1 <= y <= z ==> x / y >= x / z
   {
     forall (x: int, y: int, z: int | 0 <= x && 1 <= y <= z)
@@ -159,6 +164,7 @@ module DivMod {
   }
 
   lemma LemmaDivIsStrictlyOrderedByDenominatorAuto()
+    /* Dafny selected triggers: {x / d}, {1 < d, 0 < x} */
     ensures forall x: int, d: int {:trigger x / d} :: 0 < x && 1 < d ==> x / d < x
   {
     forall (x: int, d: int | 0 < x && 1 < d )
@@ -188,6 +194,7 @@ module DivMod {
   }
 
   lemma LemmaDividingSumsAuto()
+    /* Dafny selected triggers: {d * (a + b) / d - R} */
     ensures forall a: int, b: int, d: int, R: int {:trigger d * ((a + b) / d) - R, d*(a/d) + d*(b/d)}
         :: 0 < d &&  R == a%d + b%d - (a+b)%d ==> d*((a+b)/d) - R == d*(a/d) + d*(b/d)
   {
@@ -209,7 +216,7 @@ module DivMod {
   }
 
   lemma LemmaDivPosIsPosAuto()
-    ensures forall x: int, d: int {:trigger x / d} :: 0 <= x && 0 < d ==> 0 <= x / d
+    ensures forall x: int, d: int :: 0 <= x && 0 < d ==> 0 <= x / d
   {
     forall (x: int, d: int | 0 <= x && 0 < d)
       ensures 0 <= x / d
@@ -228,7 +235,7 @@ module DivMod {
   }
 
   lemma LemmaDivPlusOneAuto()
-    ensures forall x: int, d: int {:trigger 1 + x / d, (d + x) / d} :: 0 < d ==> 1 + x / d == (d + x) / d
+    ensures forall x: int, d: int :: 0 < d ==> 1 + x / d == (d + x) / d
   {
     forall (x: int, d: int | 0 < d)
       ensures 1 + x / d == (d + x) / d
@@ -247,6 +254,7 @@ module DivMod {
   }
 
   lemma LemmaDivMinusOneAuto()
+    /* Dafny selected triggers: {-d + x}, {-1 + x / d} */
     ensures forall x: int, d: int {:trigger -1 + x / d, (-d + x) / d} :: 0 < d ==> -1 + x / d == (-d + x) / d
   {
     forall (x: int, d: int | 0 < d)
@@ -259,12 +267,14 @@ module DivMod {
   /* dividing a smaller integer by a larger integer results in a quotient of 0 */
   lemma LemmaBasicDiv(d: int)
     requires 0 < d
+    /* Dafny selected triggers: {x / d}, {x < d}, {0 <= x} */
     ensures forall x {:trigger x / d} :: 0 <= x < d ==> x / d == 0
   {
     LemmaDivAuto(d);
   }
 
   lemma LemmaBasicDivAuto()
+    /* Dafny selected triggers:  {x / d}, {x < d} */
     ensures forall x: int, d: int {:trigger x / d} :: 0 <= x < d ==> x / d == 0
   {
     forall (x: int, d: int | 0 <= x < d)
@@ -284,7 +294,7 @@ module DivMod {
   }
 
   lemma LemmaDivIsOrderedAuto()
-    ensures forall x: int, y: int, z: int {:trigger x / z, y / z} :: x <= y && 0 < z ==> x / z <= y / z
+    ensures forall x: int, y: int, z: int :: x <= y && 0 < z ==> x / z <= y / z
   {
     forall (x: int, y: int, z: int | x <= y && 0 < z)
       ensures x / z <= y / z
@@ -304,6 +314,7 @@ module DivMod {
   }
 
   lemma LemmaDivDecreasesAuto()
+    /* Dafny selected triggers: {x / d}, {1 < d, 0 < x} */
     ensures forall x: int, d: int {:trigger x / d} :: 0 < x && 1 < d ==> x / d < x
   {
     forall (x: int, d: int | 0 < x && 1 < d)
@@ -324,6 +335,7 @@ module DivMod {
   }
 
   lemma LemmaDivNonincreasingAuto()
+    /* Dafny selected triggers: {x / d}, {0 < d, 0 <= x} */
     ensures forall x: int, d: int {:trigger x / d } :: 0 <= x && 0 < d ==> x / d <= x
   {
     forall (x: int, d: int | 0 <= x && 0 < d)
@@ -393,6 +405,7 @@ module DivMod {
   }
 
   lemma LemmaBreakdownAuto()
+    /* Dafny selected triggers: {x / y, 0 < z}, {x % (y * z)}, {0 < z, 0 < y, 0 <= x} */
     ensures forall x: int, y: int, z: int {:trigger y * z, x % (y * z), y * ((x / y) % z) + x % y} 
         :: 0 <= x && 0 < y && 0 < z ==> 0 < y * z && x % (y * z) == y * ((x / y) % z) + x % y
   {
@@ -413,6 +426,7 @@ module DivMod {
   }
 
   lemma LemmaRemainderUpperAuto()
+    /* Dafny selected triggers: {x / d}, {x - d}, {0 < d, 0 <= x} */
     ensures forall x: int, d: int {:trigger x - d, d * d} :: 0 <= x && 0 < d ==> x - d < x / d * d
   {
     forall (x: int, d: int | 0 <= x && 0 < d)
@@ -432,6 +446,7 @@ module DivMod {
   }
 
   lemma LemmaRemainderLowerAuto()
+    /* Dafny selected triggers: {x / d}, {0 < d, 0 <= x} */
     ensures forall x: int, d: int {:trigger x / d * d} :: 0 <= x && 0 < d ==> x >= x / d * d
   {
     forall x: int, d: int | 0 <= x && 0 < d
@@ -451,6 +466,7 @@ module DivMod {
   }
 
   lemma LemmaRemainderAuto()
+    /* Dafny selected triggers: {x / d} */
     ensures forall x: int, d: int {:trigger x - (x / d * d)} :: 0 <= x && 0 < d ==> 0 <= x - (x / d * d) < d
   {
     forall x: int, d: int | 0 <= x && 0 < d 
@@ -469,6 +485,7 @@ module DivMod {
   }
 
   lemma LemmaFundamentalDivModAuto()
+    /* Dafny selected triggers: {x % d}, {x / d} */
     ensures forall x: int, d: int {:trigger d * (x / d) + (x % d)} :: d != 0 ==> x == d * (x / d) + (x % d) 
   {
     forall x: int, d: int | d != 0
@@ -572,7 +589,9 @@ module DivMod {
   }
   
   lemma LemmaDivDenominatorAuto()
+    /* Dafny selected triggers: {c * d}, {0 < d, 0 < c} */
     ensures forall c: nat, d: nat {:trigger c * d} :: 0 < c && 0 < d ==> c * d != 0
+    /* Dafny selected triggers: {c * d, 0 <= x}, {x / c / d}, {0 < d, 0 < c, 0 <= x} */
     ensures forall x: int, c: nat, d: nat {:trigger (x / c) / d} 
       :: 0 <= x && 0 < c && 0 < d ==> (x / c) / d == x / (c * d)
   {
@@ -611,7 +630,7 @@ module DivMod {
   }
   
   lemma LemmaMulHoistInequalityAuto()
-    ensures forall x: int, y: int, z: int {:trigger x * (y / z), (x * y) / z} 
+    ensures forall x: int, y: int, z: int 
       :: 0 <= x && 0 < z ==> x * (y / z) <= (x * y) / z
   {
     forall (x: int, y: int, z: int | 0 <= x && 0 < z)
@@ -630,6 +649,7 @@ module DivMod {
   }
 
   lemma LemmaIndistinguishableQuotientsAuto()
+    /* Dafny selected triggers: {b / d, a / d}, {b < a + d - a % d}, {a - a % d <= b} */
     ensures forall a: int, b: int, d: int {:trigger a / d, b / d} 
       :: 0 < d && 0 <= a - a % d <= b < a + d - a % d ==> a / d == b / d
   {
@@ -672,6 +692,7 @@ module DivMod {
   }
 
   lemma LemmaTruncateMiddleAuto()
+    /* Dafny selected triggers: {b * x % c}, {b * x % (b * c)}, {0 < b * c, 0 <= x} */
     ensures forall x: int, b: int, c: int {:trigger b * (x % c)} 
       :: 0 <= x && 0 < b && 0 < c && 0 < b * c ==> (b * x) % (b * c) == b * (x % c)
   {
@@ -703,6 +724,7 @@ module DivMod {
   }
 
   lemma LemmaDivMultiplesVanishQuotientAuto()
+    /* Dafny selected triggers: {x * d, x * a}, {x * d, 0 <= a}, {x * a, 0 < d}, {0 < d, 0 <= a, 0 < x} */
     ensures forall x: int, a: int, d: int {:trigger a / d, x * d, x * a} 
       :: 0 < x && 0 <= a && 0 < d ==> 0 < x * d  &&  a / d == (x * a) / (x * d)
   {
@@ -726,6 +748,7 @@ module DivMod {
   }
 
   lemma LemmaRoundDownAuto()
+    /* Dafny selected triggers: {a + r, r < d}, {a + r, 0 < d}, {0 <= r, a % d} */
     ensures forall a: int, r: int, d: int {:trigger d * ((a + r) / d)} 
       :: 0 < d && a % d == 0 && 0 <= r < d ==> a == d * ((a + r) / d)
   {
@@ -749,6 +772,7 @@ module DivMod {
   }
 
   lemma LemmaDivMultiplesVanishFancyAuto()
+    /* Dafny selected triggers: {d * x, b < d}, {d * x, 0 <= b} */
     ensures forall x: int, b: int, d: int {:trigger (d * x + b) / d}
       :: 0 < d && 0 <= b < d ==> (d * x + b) / d == x
   {
@@ -768,6 +792,7 @@ module DivMod {
   }
 
   lemma LemmaDivMultiplesVanishAuto()
+    /* Dafny selected triggers: {x * d} */
     ensures forall x: int, d: int {:trigger (d * x) / d} :: 0 < d ==> (d * x) / d == x
   {
     forall x: int, d: int | 0 < d 
@@ -787,6 +812,7 @@ module DivMod {
   }
 
   lemma LemmaDivByMultipleAuto()
+    /* Dafny selected triggers: {b * d}, {0 < d, 0 <= b} */
     ensures forall b: int, d: int {:trigger (b * d) / d} :: 0 <= b && 0 < d ==> (b * d) / d == b
   {
     forall b: int, d: int | 0 <= b && 0 < d
@@ -809,7 +835,7 @@ module DivMod {
   }
 
   lemma LemmaDivByMultipleIsStronglyOrderedAuto()
-    ensures forall x: int, y: int, m: int, z: int {:trigger x / z, m * z, y / z} 
+    ensures forall x: int, y: int, m: int, z: int 
       :: x < y && y == m * z && 0 < z ==> x / z < y / z
   {
     forall x: int, y: int, m: int, z: int | x < y && y == m * z && 0 < z
@@ -832,6 +858,7 @@ module DivMod {
   }
 
   lemma LemmaMultiplyDivideLeAuto()
+    /* Dafny selected triggers: {a / b <= c}, {a <= b * c} */
     ensures forall a: int, b: int, c: int {:trigger a / b , b * c} :: 0 < b && a <= b * c ==> a / b <= c
   {
     forall a: int, b: int, c: int | 0 < b && a <= b * c
@@ -854,6 +881,7 @@ module DivMod {
   }
 
   lemma LemmaMultiplyDivideLtAuto()
+    /* Dafny selected triggers: {a / b < c}, {a < b * c} */
     ensures forall a: int, b: int, c: int {:trigger a / b, b * c} :: 0 < b && a < b * c ==> a / b < c
   {
     forall a: int, b: int, c: int | 0 < b && a < b * c
@@ -873,7 +901,8 @@ module DivMod {
   }
 
   lemma LemmaHoistOverDenominatorAuto()
-    ensures forall x: int, j: int, d: nat {:trigger  x / d + j} :: 0 < d ==> x / d + j == (x + j * d) / d
+    /* Dafny selected triggers:  {x + j * d}, {x / d + j} */
+    ensures forall x: int, j: int, d: nat {:trigger x / d + j} :: 0 < d ==> x / d + j == (x + j * d) / d
   {
     forall x: int, j: int, d: nat | 0 < d
       ensures x / d + j == (x + j * d) / d
@@ -915,6 +944,7 @@ module DivMod {
   }
 
   lemma LemmaPartBound1Auto()
+    /* Dafny selected triggers: {c - 1, a / b}, {c - 1, 0 < b, 0 <= a}, {a / b, 0 < c}, {0 < c, 0 < b, 0 <= a} */
     ensures forall a: int, b: int, c: int {:trigger b * (a / b) % (b * c)} 
       :: 0 <= a && 0 < b && 0 < c ==> 0 < b * c && (b * (a / b) % (b * c)) <= b * (c - 1)
   {
@@ -970,7 +1000,8 @@ module DivMod {
   }
 
   lemma LemmaModIsModRecursiveAuto()
-    ensures forall x: int, d: int {:trigger x % d}:: d > 0 ==> ModRecursive(x, d) == x % d
+    /* Dafny selected triggers: {ModRecursive(x, d)} */
+    ensures forall x: int, d: int {:trigger x % d} :: d > 0 ==> ModRecursive(x, d) == x % d
   {
     reveal ModRecursive();
     forall x: int, d: int | d > 0
@@ -983,7 +1014,9 @@ module DivMod {
   /* proves basic properties of the modulus operation: any integer divided by itself does not have a
   remainder; performing (x % m) % m gives the same result as simply perfoming x % m  */
   lemma LemmaModBasicsAuto()
+    /* Dafny selected triggers: {m % m}, {m > 0} */
     ensures forall m: int {:trigger m % m} :: m > 0 ==> m % m == 0
+    /* Dafny selected triggers: {m % m}, {m > 0} */
     ensures forall x: int, m: int {:trigger (x % m) % m} :: m > 0 ==> (x % m) % m == x % m
   {
     forall m: int | m > 0
@@ -1001,6 +1034,7 @@ module DivMod {
   /* describes the properties of the modulus operation including those described in LemmaModBasicsAuto. 
   This lemma also states that the remainder of any division will be less than the divisor's value  */
   lemma LemmaModPropertiesAuto()
+    /* Dafny selected triggers: {m % m}, {m > 0} */
     ensures forall m: int {:trigger m % m} :: m > 0 ==> m % m == 0
     ensures forall x: int, m: int {:trigger (x % m) % m} :: m > 0 ==> (x % m) % m == x % m
     ensures forall x: int, m: int {:trigger x % m} :: m > 0 ==> 0 <= x % m < m
@@ -1024,7 +1058,7 @@ module DivMod {
   }
 
   lemma LemmaModDecreasesAuto()
-    ensures forall x: nat, m: nat {:trigger x % m} :: 0 < m ==> x % m <= x
+    ensures forall x: nat, m: nat :: 0 < m ==> x % m <= x
   {
     forall x: nat, m: nat | 0 < m
       ensures x % m <= x
@@ -1048,6 +1082,7 @@ module DivMod {
   }
 
   lemma LemmaModIsZeroAuto()
+    /* Dafny selected triggers: {x >= m}, {x % m}, {m > 0, x > 0} */
     ensures forall x: nat, m: nat {:trigger x % m} :: (x > 0 && m > 0
       && x % m == 0) ==> x >= m
   {
@@ -1068,6 +1103,7 @@ module DivMod {
   }
 
   lemma LemmaModMultiplesBasicAuto()
+    /* Dafny selected triggers: {x * m} */
     ensures forall x: int, m: int {:trigger (x * m) % m} :: m > 0 ==> (x * m) % m == 0
   {
     forall x: int, m: int | m > 0
@@ -1087,6 +1123,7 @@ module DivMod {
   }
 
   lemma LemmaModAddMultiplesVanishAuto()
+    /* Dafny selected triggers: {m + b} */
     ensures forall b: int, m: int {:trigger b % m} :: 0 < m ==> (m + b) % m == b % m
   {
     forall b: int, m: int | 0 < m 
@@ -1106,6 +1143,7 @@ module DivMod {
   }
 
   lemma LemmaModSubMultiplesVanishAuto()
+    /* Dafny selected triggers: {-m + b} */
     ensures forall b: int, m: int {:trigger b % m} :: 0 < m ==> (-m + b) % m == b % m
   {
     forall b: int, m: int | 0 < m 
@@ -1127,6 +1165,7 @@ module DivMod {
   }
 
   lemma LemmaModMultiplesVanishAuto()
+    /* Dafny selected triggers: {m * a + b} */
     ensures forall a: int, b: int, m: int {:trigger (m * a + b) % m} :: 0 < m ==> (m * a + b) % m == b % m
   {
     forall a: int, b: int, m: int | 0 < m
@@ -1146,6 +1185,7 @@ module DivMod {
   }
 
   lemma LemmaModSubtractionAuto()
+    /* Dafny selected triggers: {(x - s) % d}, {x % d - s % d}, {s <= x % d} */
     ensures forall x: nat, s: nat, d: nat {:trigger (x - s) % d}
       :: 0 < d && 0 <= s <= x % d ==> x % d - s % d == (x - s) % d
   {
@@ -1165,7 +1205,7 @@ module DivMod {
   }
 
   lemma LemmaAddModNoopAuto()
-    ensures forall x: int, y: int, m: int {:trigger (x + y) % m}
+    ensures forall x: int, y: int, m: int
       :: 0 < m ==> ((x % m) + (y % m)) % m == (x + y) % m
   {
     forall x: int, y: int, m: int | 0 < m 
@@ -1184,6 +1224,7 @@ module DivMod {
   }
 
   lemma LemmaAddModNoopRightAuto()
+    /* Dafny selected triggers: {:trigger x + y % m} */
     ensures forall x: int, y: int, m: int {:trigger (x + y) % m}
       :: 0 < m ==> (x + (y % m)) % m == (x + y) % m
   {
@@ -1203,7 +1244,7 @@ module DivMod {
   }
 
   lemma LemmaSubModNoopAuto()
-    ensures forall x: int, y: int, m: int {:trigger (x - y) % m} 
+    ensures forall x: int, y: int, m: int 
       :: 0 < m ==> ((x % m) - (y % m)) % m == (x - y) % m
   {
     forall x: int, y: int, m: int | 0 < m
@@ -1222,6 +1263,7 @@ module DivMod {
   }
 
   lemma LemmaSubModNoopRightAuto()
+    /* Dafny selected triggers: {x - y % m} */
     ensures forall x: int, y: int, m: int {:trigger (x - y) % m} 
       :: 0 < m ==> (x - (y % m)) % m == (x - y) % m
   {
@@ -1243,6 +1285,7 @@ module DivMod {
   }
 
   lemma LemmaModAddsAuto()
+    /* Dafny selected triggers: {(a + b) % d}, {a % d + b % d} */
     ensures forall a: int, b: int, d: int {:trigger (a + b) % d} 
       :: 0 < d ==> a % d + b % d == (a + b) % d + d * ((a % d + b % d) / d) 
       && (a % d + b % d) < d ==> a % d + b % d == (a + b) % d
@@ -1264,7 +1307,9 @@ module DivMod {
       LemmaModAuto(d);
       var f := i => (x - i * d) % d == x % d;
       assert  MulAuto() ==> && f(0)
+      /* Dafny selected triggers: {i + 1}, {IsLe(0, i)} */
                             && (forall i {:trigger IsLe(0, i)} :: IsLe(0, i) && f(i) ==> f(i + 1))
+      /* Dafny selected triggers: {i - 1}, {IsLe(i, 0)} */
                             && (forall i {:trigger IsLe(i, 0)} :: IsLe(i, 0) && f(i) ==> f(i - 1));
       LemmaMulInductionAuto(x, f);
     }
@@ -1285,6 +1330,7 @@ module DivMod {
   }
 
   lemma {:timeLimitMultiplier 5} LemmaFundamentalDivModConverseAuto()
+    /* Dafny selected triggers: {x / d, q * d, r < d}, {x / d, q * d, 0 <= r} */
     ensures forall x: int, d: int, q: int, r: int {:trigger q * d + r, x % d}
       :: d != 0 && 0 <= r < d && x == q * d + r ==> q == x / d && r == x % d
   {
@@ -1307,6 +1353,7 @@ module DivMod {
   }
 
   lemma LemmaModPosBoundAuto()
+    /* Dafny selected triggers: {x - y, 0 < m} */
     ensures forall x: int, m: int {:trigger x % m} :: 0 <= x && 0 < m ==> 0 <= x % m < m
   {
     forall x: int, m: int | 0 <= x && 0 < m 
@@ -1325,6 +1372,7 @@ module DivMod {
   }
 
   lemma LemmaMulModNoopLeftAuto()
+    /* Dafny selected triggers: {x % m * y} */
     ensures forall x: int, y: int, m: int {:trigger x * y % m} :: 0 < m ==> (x % m) * y % m == x * y % m
   {
     forall x: int, y: int, m: int | 0 < m
@@ -1343,6 +1391,7 @@ module DivMod {
   }
 
   lemma LemmaMulModNoopRightAuto()
+    /* Dafny selected triggers: {x * y % m} */
     ensures forall x: int, y: int, m: int {:trigger (x * y) % m} 
       :: 0 < m ==> x * (y % m) % m == (x * y) % m
   {
@@ -1367,7 +1416,7 @@ module DivMod {
   }
 
   lemma LemmaMulModNoopGeneralAuto()
-    ensures forall x: int, y: int, m: int {:trigger (x * y) % m}
+    ensures forall x: int, y: int, m: int
       :: 0 < m ==> ((x % m) * y) % m == (x * (y % m)) % m == ((x % m) * (y % m)) % m == (x * y) % m
   {
     forall x: int, y: int, m: int | 0 < m
@@ -1385,7 +1434,7 @@ module DivMod {
   }
 
   lemma LemmaMulModNoopAuto()
-    ensures forall x: int, y: int, m: int {:trigger (x * y) % m} 
+    ensures forall x: int, y: int, m: int 
       :: 0 < m ==> (x % m) * (y % m) % m == (x * y) % m
   {
     forall x: int, y: int, m: int | 0 < m
@@ -1404,7 +1453,8 @@ module DivMod {
   }
 
   lemma LemmaModEquivalenceAuto()
-    ensures forall x: int, y: int, m: int {:trigger  x % m , y % m} 
+    /* Dafny selected triggers: {x - y, 0 < m} */
+    ensures forall x: int, y: int, m: int {:trigger x % m, y % m} 
       :: 0 < m && x % m == y % m <==> 0 < m && (x - y) % m == 0
   {
     forall x: int, y: int, m: int | 0 < m 
@@ -1478,7 +1528,7 @@ module DivMod {
   }
 
   lemma LemmaModOrderingAuto()
-    ensures forall x: int, k: int, d: int {:trigger x % (d * k)}  
+    ensures forall x: int, k: int, d: int 
       :: 1 < d && 0 < k ==> 0 < d * k && x % d <= x % (d * k)
   {
     forall x: int, k: int, d: int | 1 < d && 0 < k
@@ -1542,6 +1592,7 @@ module DivMod {
   }
 
   lemma LemmaPartBound2Auto()
+    /* Dafny selected triggers:  {y * z, 0 <= x}, {0 < z, 0 < y, 0 <= x} */
     ensures forall x: int, y: int, z: int {:trigger y * z, x % y}
       :: 0 <= x && 0 < y && 0 < z ==> y * z > 0 && (x % y) % (y * z) < y
   {
@@ -1605,6 +1656,7 @@ module DivMod {
   }
 
   lemma LemmaModBreakdownAuto()
+    /* Dafny selected triggers: {x / y, 0 < z}, {x % (y * z)}, {0 < z, 0 < y, 0 <= x} */
     ensures forall x: int, y: int, z: int {:trigger x % (y * z)}
       :: 0 <= x && 0 < y && 0 < z ==> y * z > 0 && x % (y * z) == y * ((x / y) % z) + x % y
   {

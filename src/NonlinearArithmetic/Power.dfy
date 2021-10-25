@@ -67,7 +67,7 @@ module Power {
   }
 
   lemma LemmaPow1Auto()
-    ensures forall b: nat {:trigger Pow(b, 1)} :: Pow(b, 1) == b
+    ensures forall b: nat :: Pow(b, 1) == b
   {
     reveal Pow();
     forall b: nat {:trigger Pow(b, 1)}
@@ -90,10 +90,10 @@ module Power {
   }
 
   lemma Lemma0PowAuto()
-    ensures forall e: nat {:trigger Pow(0, e)} :: e > 0 ==> Pow(0, e) == 0
+    ensures forall e: nat :: e > 0 ==> Pow(0, e) == 0
   {
     reveal Pow();
-    forall e: nat {:trigger Pow(0, e)} | e > 0
+    forall e: nat | e > 0
       ensures Pow(0, e) == 0
     {
       Lemma0Pow(e);
@@ -112,10 +112,10 @@ module Power {
   }
 
   lemma Lemma1PowAuto()
-    ensures forall e: nat {:trigger Pow(1, e)} :: Pow(1, e) == 1
+    ensures forall e: nat :: Pow(1, e) == 1
   {
     reveal Pow();
-    forall e: nat {:trigger Pow(1, e)}
+    forall e: nat
       ensures Pow(1, e) == 1
     {
       Lemma1Pow(e);
@@ -130,10 +130,10 @@ module Power {
   }
 
   lemma LemmaSquareIsPow2Auto()
-    ensures forall x: nat {:trigger Pow(x, 2)} :: Pow(x, 2) == x * x
+    ensures forall x: nat :: Pow(x, 2) == x * x
   {
     reveal Pow();
-    forall x: nat {:trigger Pow(x, 2)}
+    forall x: nat
       ensures Pow(x, 2) == x * x
     {}
   }
@@ -148,11 +148,11 @@ module Power {
   }
 
   lemma LemmaPowPositiveAuto()
-    ensures forall b: int, e: nat {:trigger Pow(b, e)}
+    ensures forall b: int, e: nat
       :: b > 0 ==> 0 < Pow(b, e)
   {
     reveal Pow();
-    forall b: int, e: nat {:trigger Pow(b, e)} | b > 0
+    forall b: int, e: nat | b > 0
       ensures 0 < Pow(b, e)
     {
       LemmaPowPositive(b, e);
@@ -189,10 +189,12 @@ module Power {
   }
 
   lemma LemmaPowAddsAuto()
+    /* Dafny selected triggers: {Pow(b, e1) * Pow(b, e2)}, {Pow(b, e1 + e2)} */
     ensures forall b: int, e1: nat, e2: nat {:trigger Pow(b, e1 + e2)}
       :: Pow(b, e1 + e2) == Pow(b, e1) * Pow(b, e2)
   {
     reveal Pow();
+    /* Dafny selected triggers: {Pow(b, e1) * Pow(b, e2)}, {Pow(b, e1 + e2)} */
     forall b: int, e1: nat, e2: nat {:trigger Pow(b, e1 + e2)}
       ensures Pow(b, e1 + e2) == Pow(b, e1) * Pow(b, e2)
     {
@@ -219,12 +221,14 @@ module Power {
 
   lemma LemmaPowSubtractsAuto()
     ensures forall b: nat, e1: nat :: b > 0 ==> Pow(b, e1) > 0
+    /* Dafny selected triggers: {Pow(b, e2) / Pow(b, e1)}, {e2 - e1, b > 0}, {e1 <= e2, b > 0} */
     ensures forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e2 - e1)}
       :: b > 0 && e1 <= e2 ==>
          Pow(b, e2 - e1) == Pow(b, e2) / Pow(b, e1) > 0
   {
     reveal Pow();
     LemmaPowPositiveAuto();
+    /* Dafny selected triggers: {Pow(b, e1), Pow(b, e2)}, {Pow(b, e2), e1 <= e2} */
     forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e2 - e1)}
       | b > 0 && e1 <= e2
       ensures Pow(b, e2 - e1) == Pow(b, e2) / Pow(b, e1) > 0
@@ -276,12 +280,14 @@ module Power {
   }
 
   lemma LemmaPowMultipliesAuto()
-    ensures forall b: nat, c: nat {:trigger b * c} :: 0 <= b * c
+    ensures forall b: nat, c: nat :: 0 <= b * c
+    /* Dafny selected triggers: {Pow(a, b * c)}, {Pow(Pow(a, b), c)} */
     ensures forall a: int, b: nat, c: nat {:trigger Pow(a, b * c)}
       :: Pow(Pow(a, b), c) == Pow(a, b * c)
   {
     reveal Pow();
     LemmaMulNonnegativeAuto();
+    /* Dafny selected triggers: {Pow(a, b * c)}, {Pow(Pow(a, b), c)} */
     forall a: int, b: nat, c: nat {:trigger Pow(a, b * c)}
       ensures Pow(Pow(a, b), c) == Pow(a, b * c)
     {
@@ -310,10 +316,12 @@ module Power {
   }
 
   lemma LemmaPowDistributesAuto()
+    /* Dafny selected triggers: {Pow(a, e) * Pow(b, e)}, {Pow(a * b, e) */
     ensures forall a: int, b: int, e: nat {:trigger Pow(a * b, e)}
       :: Pow(a * b, e) == Pow(a, e) * Pow(b, e)
   {
     reveal Pow();
+    /* Dafny selected triggers: {Pow(a, e) * Pow(b, e)}, {Pow(a * b, e) */
     forall a: int, b: int, e: nat {:trigger Pow(a * b, e)}
       ensures Pow(a * b, e) == Pow(a, e) * Pow(b, e)
     {
@@ -323,14 +331,18 @@ module Power {
 
   /* Group properties of powers. */
   lemma LemmaPowAuto()
-    ensures forall x: int {:trigger Pow(x, 0)} :: Pow(x, 0) == 1
-    ensures forall x: int {:trigger Pow(x, 1)} :: Pow(x, 1) == x
-    ensures forall x: int, y: int {:trigger Pow(x, y)} :: y == 0 ==> Pow(x, y) == 1
-    ensures forall x: int, y: int {:trigger Pow(x, y)} :: y == 1 ==> Pow(x, y) == x
+    ensures forall x: int :: Pow(x, 0) == 1
+    ensures forall x: int :: Pow(x, 1) == x
+    ensures forall x: int, y: int :: y == 0 ==> Pow(x, y) == 1
+    ensures forall x: int, y: int :: y == 1 ==> Pow(x, y) == x
+    /* Dafny selected triggers: {x * y}, {0 < y, 0 < x} */
     ensures forall x: int, y: int {:trigger x * y} :: 0 < x && 0 < y ==> x <= x * y
+    /* Dafny selected triggers: {x * y}, {1 < y, 0 < x} */
     ensures forall x: int, y: int {:trigger x * y} :: 0 < x && 1 < y ==> x < x * y
+    /* Dafny selected triggers: {Pow(x, y) * Pow(x, z)}, {Pow(x, y + z)} */
     ensures forall x: int, y: nat, z: nat {:trigger Pow(x, y + z)} :: Pow(x, y + z) == Pow(x, y) * Pow(x, z)
-    ensures forall x: int, y: nat, z: nat {:trigger Pow(x, y - z)} :: y >= z ==> Pow(x, y - z) * Pow(x, z) == Pow(x, y)
+    ensures forall x: int, y: nat, z: nat :: y >= z ==> Pow(x, y - z) * Pow(x, z) == Pow(x, y)
+    /* Dafny selected triggers: {Pow(x, z) * Pow(y, z)}, {Pow(x * y, z)} */
     ensures forall x: int, y: int, z: nat {:trigger Pow(x * y, z)} :: Pow(x * y, z) == Pow(x, z) * Pow(y, z)
   {
     reveal Pow();
@@ -341,7 +353,7 @@ module Power {
     LemmaPowDistributesAuto();
     LemmaPowAddsAuto();
 
-    forall x: int, y: nat, z: nat {:trigger Pow(x, y - z)} | y >= z
+    forall x: int, y: nat, z: nat | y >= z
       ensures Pow(x, y - z) * Pow(x, z) == Pow(x, y)
     {
       LemmaPowAdds(x, y - z, z);
@@ -379,11 +391,10 @@ module Power {
   }
 
   lemma LemmaPowStrictlyIncreasesAuto()
-    ensures forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1),
-      Pow(b, e2)} :: (1 < b && e1 < e2) ==> Pow(b, e1) < Pow(b, e2)
+    ensures forall b: nat, e1: nat, e2: nat :: (1 < b && e1 < e2) ==> Pow(b, e1) < Pow(b, e2)
   {
     reveal Pow();
-    forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1), Pow(b, e2)}
+    forall b: nat, e1: nat, e2: nat
       | 1 < b && e1 < e2
       ensures Pow(b, e1) < Pow(b, e2)
     {
@@ -417,11 +428,10 @@ module Power {
   }
 
   lemma LemmaPowIncreasesAuto()
-    ensures forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1),
-      Pow(b, e2)} :: (1 < b && e1 <= e2) ==> Pow(b, e1) <= Pow(b, e2)
+    ensures forall b: nat, e1: nat, e2: nat :: (1 < b && e1 <= e2) ==> Pow(b, e1) <= Pow(b, e2)
   {
     reveal Pow();
-    forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1), Pow(b, e2)}
+    forall b: nat, e1: nat, e2: nat
       | 1 < b && e1 <= e2
       ensures Pow(b, e1) <= Pow(b, e2)
     {
@@ -448,7 +458,7 @@ module Power {
       :: b > 0 && Pow(b, e1) < Pow(b, e2) ==> e1 < e2
   {
     reveal Pow();
-    forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1), Pow(b, e2)}
+    forall b: nat, e1: nat, e2: nat
       | b > 0 && Pow(b, e1) < Pow(b, e2)
       ensures e1 < e2
     {
@@ -474,7 +484,7 @@ module Power {
       :: 1 < b && Pow(b, e1) <= Pow(b, e2) ==> e1 <= e2
   {
     reveal Pow();
-    forall b: nat, e1: nat, e2: nat {:trigger Pow(b, e1), Pow(b, e2)}
+    forall b: nat, e1: nat, e2: nat
       | 1 < b && Pow(b, e1) <= Pow(b, e2)
       ensures e1 <= e2
     {
@@ -502,6 +512,7 @@ module Power {
   }
 
   lemma LemmaPullOutPowsAuto()
+    /* Dafny selected triggers: {y * z}, {z * y} */
     ensures forall y: nat, z: nat {:trigger z * y} :: 0 <= z * y && 0 <= y * z
     ensures forall b: nat, x: nat, y: nat, z: nat
       {:trigger Pow(Pow(b, x * y), z)}
@@ -509,6 +520,7 @@ module Power {
   {
     reveal Pow();
     LemmaMulNonnegativeAuto();
+    /* Dafny selected triggers: {Pow(Pow(b, x), y * z)}, {Pow(Pow(b, x * y), z)} */
     forall b: nat, x: nat, y: nat, z: nat {:trigger Pow(Pow(b, x * y), z)}
       | b > 0 ensures Pow(Pow(b, x * y), z) == Pow(Pow(b, x), y * z)
     {
@@ -578,11 +590,11 @@ module Power {
   }
 
   lemma LemmaPowModAuto()
-    ensures forall b: nat, e: nat {:trigger Pow(b, e)}
+    ensures forall b: nat, e: nat
       :: b > 0 && e > 0 ==> Pow(b, e) % b == 0
   {
     reveal Pow();
-    forall b: nat, e: nat {:trigger Pow(b, e)} | b > 0 && e > 0
+    forall b: nat, e: nat | b > 0 && e > 0
       ensures Pow(b, e) % b == 0
     {
       LemmaPowMod(b, e);
@@ -614,11 +626,11 @@ module Power {
   }
 
   lemma LemmaPowModNoopAuto()
-    ensures forall b: nat, e: nat, m: nat {:trigger Pow(b % m, e)}
+    ensures forall b: nat, e: nat, m: nat
       :: m > 0 ==> Pow(b % m, e) % m == Pow(b, e) % m
   {
     reveal Pow();
-    forall b: nat, e: nat, m: nat {:trigger Pow(b % m, e)}
+    forall b: nat, e: nat, m: nat
       | m > 0 ensures Pow(b % m, e) % m == Pow(b, e) % m
     {
       LemmaPowModNoop(b, e, m);
