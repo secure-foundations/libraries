@@ -232,8 +232,8 @@ module Mul {
   lemma LemmaMulStrictUpperBound(x: int, XBound: int, y: int, YBound: int)
     requires x < XBound 
     requires y < YBound 
-    requires 0 < x
-    requires 0 < y
+    requires 0 <= x
+    requires 0 <= y
     ensures x * y <= (XBound - 1) * (YBound - 1)
   {
     LemmaMulInequality(x, XBound - 1, y);
